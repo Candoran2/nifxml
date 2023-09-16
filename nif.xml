@@ -295,6 +295,10 @@
         A float in the range -1.0:1.0, stored as a byte.
     </basic>
 
+    <basic name="normsbyte" boolean="false" size="1">
+        A float in the range -1.0:1.0, stored as a signed byte.
+    </basic>
+
     <basic name="bool" boolean="true" integral="true" countable="false">
         A boolean; 32-bit up to and including 4.0.0.2, 8-bit from 4.1.0.1 on.
     </basic>
@@ -1717,6 +1721,14 @@
         <field name="a" type="float">Alpha.</field>
     </struct>
 
+    <struct name="HalfColor4" size="8" convertible="Color4" module="NiMain">
+        A color with alpha (red, green, blue, alpha).
+        <field name="r" type="hfloat">Red color component.</field>
+        <field name="g" type="hfloat">Green color component.</field>
+        <field name="b" type="hfloat">Blue color component.</field>
+        <field name="a" type="hfloat">Alpha color component.</field>
+    </struct>
+
     <struct name="ByteColor4" size="4" convertible="Color4" module="NiMain">
         A color with alpha (red, green, blue, alpha).
         <field name="r" type="byte">Red color component.</field>
@@ -1776,6 +1788,13 @@
         <field name="x" type="normbyte">First coordinate.</field>
         <field name="y" type="normbyte">Second coordinate.</field>
         <field name="z" type="normbyte">Third coordinate.</field>
+    </struct>
+
+    <struct name="SbyteVector3" size="3" convertible="Vector3 UshortVector3" module="NiMain">
+        A vector in 3D space (x,y,z).
+        <field name="x" type="normsbyte">First coordinate.</field>
+        <field name="y" type="normsbyte">Second coordinate.</field>
+        <field name="z" type="normsbyte">Third coordinate.</field>
     </struct>
 
     <struct name="Vector4" size="16" module="NiMain">
@@ -1911,6 +1930,12 @@
         <field name="Index" type="ushort">The vertex index, in the mesh.</field>
         <field name="Weight" type="float" range="#F0_1#">The vertex weight - between 0.0 and 1.0</field>
     </struct>
+
+    <compound name="BoneVertDataHalf" versions="V20_3_1_1 V20_3_1_2">
+        NiSkinData::BoneVertData. A vertex and its weight.
+        <field name="Index" type="ushort">The vertex index, in the mesh.</field>
+        <field name="Weight" type="hfloat">The vertex weight - between 0.0 and 1.0</field>
+    </compound>
 
     <struct name="AVObject" module="NiMain">
         Used in NiDefaultAVObjectPalette.
@@ -2153,9 +2178,12 @@
         <field name="Has Vertex Map" type="bool" since="10.1.0.0">Do we have a vertex map?</field>
         <field name="Vertex Map" type="ushort" length="Num Vertices" until="10.0.1.2">Maps the weight/influence lists in this submesh to the vertices in the shape being skinned.</field>
         <field name="Vertex Map" type="ushort" length="Num Vertices" cond="Has Vertex Map" since="10.1.0.0">Maps the weight/influence lists in this submesh to the vertices in the shape being skinned.</field>
-        <field name="Has Vertex Weights" type="bool" since="10.1.0.0">Do we have vertex weights?</field>
+        <field name="Has Vertex Weights" type="bool" since="10.1.0.0">Do we have vertex weights?
+        1 (default): vertex weights are stored in floats.
+        15 (compression): vertex weights are stored in half floats (found in 20.3.1.1 Fantasy Frontier Online).</field>
         <field name="Vertex Weights" type="float" length="Num Vertices" width="Num Weights Per Vertex" until="10.0.1.2">The vertex weights.</field>
-        <field name="Vertex Weights" type="float" length="Num Vertices" width="Num Weights Per Vertex" cond="Has Vertex Weights" since="10.1.0.0">The vertex weights.</field>
+        <field name="Vertex Weights" type="float" length="Num Vertices" width="Num Weights Per Vertex" cond="(Has Vertex Weights #GT# 0) #AND# (Has Vertex Weights #NEQ# 15)" since="10.1.0.0">The vertex weights.</field>
+        <field name="Vertex Weights" type="hfloat" length="Num Vertices" width="Num Weights Per Vertex" cond="Has Vertex Weights #EQ# 15" ver1="20.3.1.1">The vertex weights.</field>
         <field name="Strip Lengths" type="ushort" length="Num Strips">The strip lengths.</field>
         <field name="Has Faces" type="bool" calc="(#LEN[Strips]# #ADD# #LEN[Triangles]#) #GT# 0 #THEN# true #ELSE# false" since="10.1.0.0">Do we have triangle or strip data?</field>
         <field name="Strips" type="ushort" length="Num Strips" width="Strip Lengths" cond="Num Strips != 0" until="10.0.1.2">The strips.</field>
@@ -2280,7 +2308,8 @@
         <field name="Bounding Sphere" type="NiBound">Note that its a Sphere Containing Axis Aligned Box not a minimum volume Sphere</field>
         <field name="Num Vertices" type="ushort">Number of weighted vertices.</field>
         <field name="Vertex Weights" type="BoneVertData" length="Num Vertices" until="4.2.1.0">The vertex weights.</field>
-        <field name="Vertex Weights" type="BoneVertData" length="Num Vertices" since="4.2.2.0" cond="#ARG# != 0">The vertex weights.</field>
+        <field name="Vertex Weights" type="BoneVertData" length="Num Vertices" since="4.2.2.0" cond="(#ARG# != 0) #AND# (#ARG# #NEQ# 15)">The vertex weights.</field>
+        <field name="Vertex Weights" type="BoneVertDataHalf" arr1="Num Vertices" ver1="20.3.1.1" cond="#ARG# #EQ# 15">The vertex weights.</field>
     </struct>
 
     <struct name="HavokFilter" size="4" module="BSHavok" versions="#BETHESDA#">
@@ -3889,13 +3918,21 @@
         <field name="BS Max Vertices" type="ushort" onlyT="NiPSysData" since="20.2.0.7" until="20.2.0.7" vercond="#BS_GTE_FO3#">Bethesda uses this for max number of particles in NiPSysData.</field>
         <field name="Keep Flags" type="byte" since="10.1.0.0">Used with NiCollision objects when OBB or TRI is set.</field>
         <field name="Compress Flags" type="byte" since="10.1.0.0" />
-        <field name="Has Vertices" type="bool" default="true">Is the vertex array present? (Always non-zero.)</field>
-        <field name="Vertices" type="Vector3" length="Num Vertices" cond="Has Vertices">The mesh vertices.</field>
+        <field name="Has Vertices" type="bool" default="true">Is the vertex array present? (Always non-zero.)
+        1 (default): vertices and texture coordinates are stored in floats.
+        15 (compression): vertices and texture coordinates are stored in half floats (found in 20.3.1.1 Fantasy Frontier Online).</field>
+        <field name="Vertices" type="Vector3" length="Num Vertices" cond="(Has Vertices #GT# 0) #AND# (Has Vertices #NEQ# 15)">The mesh vertices.</field>
+        <field name="Vertices" type="HalfVector3" length="Num Vertices" ver1="20.3.1.1" cond="Has Vertices #EQ# 15">The mesh vertices.</field>
         <field name="Data Flags" type="NiGeometryDataFlags" since="10.0.1.0" vercond="!#BS202#" />
         <field name="BS Data Flags" type="BSGeometryDataFlags" vercond="#BS202#" />
         <field name="Material CRC" type="uint" since="20.2.0.7" until="20.2.0.7" vercond="#BS_GT_FO3#" />
-        <field name="Has Normals" type="bool">Do we have lighting normals? These are essential for proper lighting: if not present, the model will only be influenced by ambient light.</field>
-        <field name="Normals" type="Vector3" length="Num Vertices" cond="Has Normals">The lighting normals.</field>
+        <field name="Has Normals" type="bool">Do we have lighting normals? These are essential for proper lighting: if not present, the model will only be influenced by ambient light.
+        1 (default): normals are stored in floats.
+        6 (compression): normals are stored in ByteVector3 (found in 20.3.1.1 Fantasy Frontier Online).
+        15 (compression): normals are stored in HalfVector3 (found in 20.3.1.2 Aura Kingdom).</field>
+        <field name="Normals" type="Vector3" length="Num Vertices" cond="(Has Normals #GT# 0) #AND# (Has Normals #NEQ# 6) #AND# (Has Normals #NEQ# 15)">The lighting normals.</field>
+        <field name="Normals" type="HalfVector3" length="Num Vertices" ver1="20.3.1.2" cond="Has Normals #EQ# 15">The lighting normals.</field>
+        <field name="Normals" type="SbyteVector3" length="Num Vertices" ver1="20.3.1.1" cond="Has Normals #EQ# 6">The lighting normals.</field>
         <field name="Tangents" type="Vector3" length="Num Vertices" cond="(Has Normals) #AND# (((Data Flags #BITOR# BS Data Flags) #BITAND# 4096) != 0)" since="10.1.0.0">Tangent vectors.</field>
         <field name="Bitangents" type="Vector3" length="Num Vertices" cond="(Has Normals) #AND# (((Data Flags #BITOR# BS Data Flags) #BITAND# 4096) != 0)" since="10.1.0.0">Bitangent vectors.</field>
         <field name="Has DIV2 Floats" type="bool" since="20.3.0.9" until="20.3.0.9" vercond="#DIVINITY2#" />
@@ -3907,15 +3944,23 @@
             Note: how vertex colors influence the model can be controlled by having a NiVertexColorProperty object as a property child of the root node. If this property object is not present, the vertex colors fine-tune lighting.
 
             Note 2: set to either 0 or 0xFFFFFFFF for NifTexture compatibility.
+
+            Note 3:
+            1 (default): vertex colors are stored in 4 floats.
+            7 (compression): vertex colors are stored in 4 bytes (found in 20.3.1.1 Fantasy Frontier Online).
+            15 (compression): vertex colors are stored in 4 half floats (found in 20.3.1.2 Aura Kingdom).
         </field>
-        <field name="Vertex Colors" type="Color4" default="#VEC4_ONE#" length="Num Vertices" cond="Has Vertex Colors">The vertex colors.</field>
+        <field name="Vertex Colors" type="Color4" default="#VEC4_ONE#" length="Num Vertices" cond="(Has Vertex Colors #GT# 0) #AND# (Has Vertex Colors #NEQ# 7) #AND# (Has Vertex Colors #NEQ# 15)">The vertex colors.</field>
+        <field name="Vertex Colors" type="HalfColor4" length="Num Vertices" ver1="20.3.1.2" cond="Has Vertex Colors #EQ# 15">The vertex colors.</field>
+        <field name="Vertex Colors" type="ByteColor4" length="Num Vertices" ver1="20.3.1.1" cond="Has Vertex Colors #EQ# 7">The vertex colors.</field>
         <field name="Data Flags" type="NiGeometryDataFlags" until="4.2.2.0">The lower 6 bits of this field represent the number of UV texture sets. The rest is unused.</field>
         <field name="Has UV" type="bool" until="4.0.0.2">
             Do we have UV coordinates?
 
             Note: for compatibility with NifTexture, set this value to either 0x00000000 or 0xFFFFFFFF.
         </field>
-        <field name="UV Sets" type="TexCoord" length="((Data Flags #BITAND# 63) #BITOR# (BS Data Flags #BITAND# 1))" width="Num Vertices">The UV texture coordinates. They follow the OpenGL standard: some programs may require you to flip the second coordinate.</field>
+        <field name="UV Sets" type="TexCoord" cond="(Has Vertices #GT# 0) #AND# (Has Vertices #NEQ# 15)" length="((Data Flags #BITAND# 63) #BITOR# (BS Data Flags #BITAND# 1))" width="Num Vertices">The UV texture coordinates. They follow the OpenGL standard: some programs may require you to flip the second coordinate.</field>
+        <field name="UV Sets" type="HalfTexCoord" cond="Has Vertices #EQ# 15" length="((Data Flags #BITAND# 63) #BITOR# (BS Data Flags #BITAND# 1))" width="Num Vertices" ver1="20.3.1.1">The UV texture coordinates. They follow the OpenGL standard: some programs may require you to flip the second coordinate.</field>
         <field name="Consistency Flags" type="ConsistencyType" since="10.0.1.0" default="CT_MUTABLE">Consistency Flags</field>
         <field name="Additional Data" type="Ref" template="AbstractAdditionalGeometryData" since="20.0.0.4" />
     </niobject>
@@ -3978,6 +4023,7 @@
         <field name="Flags" type="AlphaFlags" default="4844" />
         <field name="Threshold" type="byte" default="128">Threshold for alpha testing</field>
         <field name="Unknown Short 1" type="ushort" until="2.3" />
+        <field name="Unknown Short 1" type="ushort" ver1="20.3.1.1" ver2="20.3.1.2">Unknown</field>
         <field name="Unknown Int 2" type="uint" until="2.3" />
     </niobject>
 
@@ -5074,7 +5120,9 @@
         <field name="Skin Transform" type="NiTransform">Offset of the skin from this bone in bind position.</field>
         <field name="Num Bones" type="uint">Number of bones.</field>
         <field name="Skin Partition" type="Ref" template="NiSkinPartition" since="4.0.0.2" until="10.1.0.0">This optionally links a NiSkinPartition for hardware-acceleration information.</field>
-        <field name="Has Vertex Weights" type="bool" since="4.2.1.0" default="true">Enables Vertex Weights for this NiSkinData.</field>
+        <field name="Has Vertex Weights" type="bool" since="4.2.1.0" default="true">Enables Vertex Weights for this NiSkinData.
+        1 (default): vertex weights are stored in floats.
+        15 (compression): vertex weights are stored in half floats (found in 20.3.1.1 Fantasy Frontier Online).</field>
         <field name="Bone List" type="BoneData" length="Num Bones" arg="Has Vertex Weights">Contains offset data for each node that this skin is influenced by.</field>
     </niobject>
 
@@ -5237,15 +5285,15 @@
         <field name="Flags" type="TexturingFlags" since="20.1.0.2">Property flags.</field>
         <field name="Apply Mode" type="ApplyMode" default="APPLY_MODULATE" since="3.3.0.13" until="20.1.0.1">Determines how the texture will be applied.  Seems to have special functions in Oblivion.</field>
         <field name="Texture Count" type="uint" default="7">Number of textures.</field>
-        <field name="Has Base Texture" type="bool" />
+        <field name="Has Base Texture" type="bool" cond="Texture Count #GT# 0" />
         <field name="Base Texture" type="TexDesc" cond="Has Base Texture" />
-        <field name="Has Dark Texture" type="bool" />
+        <field name="Has Dark Texture" type="bool" cond="Texture Count #GT# 1" />
         <field name="Dark Texture" type="TexDesc" cond="Has Dark Texture" />
-        <field name="Has Detail Texture" type="bool" />
+        <field name="Has Detail Texture" type="bool" cond="Texture Count #GT# 2" />
         <field name="Detail Texture" type="TexDesc" cond="Has Detail Texture" />
-        <field name="Has Gloss Texture" type="bool" />
+        <field name="Has Gloss Texture" type="bool" cond="Texture Count #GT# 3" />
         <field name="Gloss Texture" type="TexDesc" cond="Has Gloss Texture" />
-        <field name="Has Glow Texture" type="bool" />
+        <field name="Has Glow Texture" type="bool" cond="Texture Count #GT# 4" />
         <field name="Glow Texture" type="TexDesc" cond="Has Glow Texture" />
         <field name="Has Bump Map Texture" type="bool" since="3.3.0.13" cond="Texture Count #GT# 5" />
         <field name="Bump Map Texture" type="TexDesc" since="3.3.0.13" cond="Has Bump Map Texture" />
