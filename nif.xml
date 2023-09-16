@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE niftoolsxml>
-<niftoolsxml version="0.10.0.0">
+<niftoolsxml version="0.10.0.1">
 
     <token name="verexpr" attrs="vercond">
         Commonly used version expressions.
@@ -212,7 +212,9 @@
     <version id="V20_2_0_7_FO4_2" num="20.2.0.7" user="12" bsver="132 139" ext="bto btr" supported="false">Fallout 4 (LS_Mirelurk.nif, Screen.nif)</version>
     <version id="V20_2_0_7_F76" num="20.2.0.7" user="12" bsver="155" ext="bto">{{Fallout 76}}</version>
     <version id="V20_2_0_8" num="20.2.0.8" ext="nifcache">{{Empire Earth III}}, {{FFT Online}}, Atlantica Online, IRIS Online, Wizard101</version>
-    <version id="V20_2_4_7" num="20.2.4.7">QQSpeed</version>
+    <version id="V20_2_4_7" num="20.2.4.7">{{QQSpeed}}</version>
+    <version id="V20_2_4_7" num="20.2.5.22">QQSpeed</version>
+    <version id="V20_2_4_7" num="20.2.5.23">QQSpeed</version>
     <version id="V20_3_0_1" num="20.3.0.1">Emerge</version>
     <version id="V20_3_0_2" num="20.3.0.2">Emerge</version>
     <version id="V20_3_0_3" num="20.3.0.3">Emerge</version>
@@ -3492,6 +3494,7 @@
         <field name="Has Bounding Volume" type="bool" since="3.0" until="4.2.2.0" />
         <field name="Bounding Volume" type="BoundingVolume" cond="Has Bounding Volume" since="3.0" until="4.2.2.0" />
         <field name="Collision Object" type="Ref" template="NiCollisionObject" since="10.0.1.0" />
+        <field name="Unknown QQSpeed NiAVObject Bytes" type="byte" length="5" since="20.2.5.23" until="20.2.5.23">Could be one byte and a uint. Always 00 17 00 00 00?</field>
     </niobject>
 
     <niobject name="NiDynamicEffect" abstract="true" inherit="NiAVObject" module="NiMain">
@@ -3656,6 +3659,7 @@
 
     <niobject name="NiTransformController" inherit="NiKeyframeController" module="NiAnimation">
         NiTransformController replaces NiKeyframeController.
+        <field name="Unknown QQSpeed Integer" type="uint" since="20.2.5.23"  until="20.2.5.23" >Always 00 00 00 00?</field>
     </niobject>
 
     <niobject name="NiPSysModifierCtlr" abstract="true" inherit="NiSingleInterpController" module="NiParticle">
@@ -4178,6 +4182,7 @@
         <field name="Num Screen Polygons" type="uint" calc="0">Deprecated. Array is always zero length on disk write.</field>
         <field name="Num Screen Textures" type="uint" calc="0" since="4.2.1.0">Deprecated. Array is always zero length on disk write.</field>
         <field name="Unknown Int 3" type="uint" until="3.1" />
+        <field name="Unknown QQSpeed Camera Int" type="int" since="20.2.5.23" until="20.2.5.23" >Always -1?</field>
     </niobject>
 
     <niobject name="NiColorData" inherit="NiObject" module="NiAnimation">
@@ -5291,6 +5296,7 @@
 
     <niobject name="NiTriStrips" inherit="NiTriBasedGeom" module="NiMain">
         A shape node that refers to data organized into strips of triangles
+        <field name="Unknown QQSpeed Strip Bytes" type="byte" length="21" since="20.2.5.23" until="20.2.5.23">Unknown bytes, all 0.</field>
     </niobject>
 
     <niobject name="NiTriStripsData" inherit="NiTriBasedGeomData" module="NiMain">
@@ -5425,6 +5431,9 @@
         <field name="Flags" type="ZBufferFlags" default="3" />
         <field name="Function" type="TestFunction" default="TEST_LESS_EQUAL" since="4.1.0.12" until="20.0.0.5">
             Z-Test function. In Flags from 20.1.0.3 on.
+        </field>
+        <field name="Unknown QQSpeed Uint" type="uint" since="20.2.5.23" until="20.2.5.23">
+            0 in example
         </field>
     </niobject>
 
@@ -8496,7 +8505,9 @@
         <field name="Binary Data" type="ByteArray" />
     </niobject>
 
-    <niobject name="CsNiNode" inherit="NiNode" />
+    <!-- Digimon Masters Online -->
+
+    <niobject name="CsNiNode" inherit="NiNode" version="V20_3_0_9" />
 
     <!-- Epic Mickey -->
 
